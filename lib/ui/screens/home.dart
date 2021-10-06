@@ -52,6 +52,7 @@ class _HomePageState extends State<HomePage> {
         firstDate: DateTime(2000),
         lastDate: DateTime(now.year + 50));
     print(selectdate);
+    if (selectdate == null) return;
     setState(() {
       dateSave = selectdate;
     });
@@ -161,6 +162,7 @@ class SalesCard extends StatefulWidget {
 
 class _SalesCardState extends State<SalesCard> {
   bool isopen = false;
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -199,6 +201,7 @@ class _SalesCardState extends State<SalesCard> {
                           children: [
                             ElevatedButton(
                                 onPressed: () async {
+                                  Future.delayed(Duration(seconds: 10));
                                   List<DetailSalesModel> details = List.empty();
                                   try {
                                     final result = await http.post(
@@ -223,35 +226,49 @@ class _SalesCardState extends State<SalesCard> {
                               width: 10,
                             ),
                             ElevatedButton(
-                                onPressed: () async {
-                                  try {
-                                    final result = await http.post(
-                                        Uri.parse(Api.url + 'delete-items.php'),
-                                        body: {'id': widget.item.id});
+                                onPressed: isLoading
+                                    ? null
+                                    : () async {
+                                        setState(() {
+                                          isLoading = true;
+                                        });
+                                        try {
+                                          final result = await http.post(
+                                              Uri.parse(
+                                                  Api.url + 'delete-sales.php'),
+                                              body: {'id': widget.item.id});
 
-                                    if (result.statusCode == 200) {
-                                      BlocProvider.of<SalesCubit>(context)
-                                          .refreshSales();
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(SnackBar(
-                                              content: Text(
-                                                  'Item Berhasil di hapus')));
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(SnackBar(
-                                        content: Text('Item gagal di hapus'),
-                                        behavior: SnackBarBehavior.floating,
-                                      ));
-                                    }
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                            content:
-                                                Text('Item gagal di hapus'),
-                                            behavior:
-                                                SnackBarBehavior.floating));
-                                  }
-                                },
+                                          if (result.statusCode == 200) {
+                                            BlocProvider.of<SalesCubit>(context)
+                                                .refreshSales();
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(SnackBar(
+                                                    content: Text(
+                                                        'Item Berhasil di hapus')));
+                                          } else {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(SnackBar(
+                                              content:
+                                                  Text('Item gagal di hapus'),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                            ));
+                                            setState(() {
+                                              isLoading = false;
+                                            });
+                                          }
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(SnackBar(
+                                                  content: Text(
+                                                      'Terjadi kesalahan.'),
+                                                  behavior: SnackBarBehavior
+                                                      .floating));
+                                          setState(() {
+                                            isLoading = false;
+                                          });
+                                        } finally {}
+                                      },
                                 child: Text('Hapus'))
                           ],
                         ),
@@ -278,7 +295,7 @@ class DetailSales extends StatelessWidget {
         NumberFormat.currency(symbol: 'Rp ', locale: 'id', decimalDigits: 0);
     return AlertDialog(
       scrollable: true,
-      title: Text('Bontang Pos'),
+      title: Text('ETAM BERSINAR'),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

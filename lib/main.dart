@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:ashapos/blocs/authentication/authentication_cubit.dart';
 import 'package:ashapos/blocs/cart/cart_cubit.dart';
 import 'package:ashapos/blocs/categories_food/categories_food_cubit.dart';
@@ -10,7 +12,17 @@ import 'package:authentication_repository/authentication_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
+
 void main() {
+  HttpOverrides.global = new MyHttpOverrides();
   runApp(MyApp(
     authenticationRepository: AuthenticationRepository(),
   ));
@@ -57,7 +69,7 @@ class _MyAppViewState extends State<MyAppView> {
       navigatorKey: _navigatorKey,
       title: 'ETAM BERSINAR',
       theme: ThemeData(
-        primarySwatch: Colors.green,
+        primarySwatch: Colors.blue,
       ),
       builder: (context, child) =>
           BlocListener<AuthenticationCubit, AuthenticationState>(

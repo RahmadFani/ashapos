@@ -1,5 +1,6 @@
 class Api {
-  static String url = 'https://bontang.ashapos.com/api/';
+  static String url = 'https://bersinar.bontangkota.com/api/';
 
-  static String assetsUrl = "https://apps.ashapos.com/assets/uploads/";
+  static String assetsUrl =
+      "https://bersinar.bontangkota.com/core/assets/uploads/";
 }

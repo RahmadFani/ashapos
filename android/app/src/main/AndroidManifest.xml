@@ -2,8 +2,10 @@
     package="com.example.ashapos">
     <uses-permission android:name="android.permission.INTERNET" />
    <application
-        android:label="ashapos"
-        android:icon="@mipmap/ic_launcher">
+        android:label="ETAM BERSINAR"
+        android:icon="@mipmap/launcher_icon"
+        android:usesCleartextTraffic="true"
+        >
 
         <activity
             android:name=".MainActivity"

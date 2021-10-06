@@ -11,9 +11,9 @@ class SplashPage extends StatelessWidget {
       body: SizedBox.expand(
         child: Center(
             child: Image.asset(
-          'assets/ashapos/bontanglogo_2.png',
-          width: 100,
-          height: 100,
+          'assets/ashapos/logo15.png',
+          width: 200,
+          height: 200,
           fit: BoxFit.contain,
         )),
       ),

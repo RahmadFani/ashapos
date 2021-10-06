@@ -963,7 +963,7 @@ class CartPayDialog extends StatefulWidget {
 
 class _CartPayDialogState extends State<CartPayDialog> {
   String datepick = '';
-  String dropdownValue = 'Kartu';
+  String dropdownValue = 'Tunai';
   @override
   void initState() {
     super.initState();
@@ -977,11 +977,12 @@ class _CartPayDialogState extends State<CartPayDialog> {
     });
   }
 
-  int get methodPembayaranId => dropdownValue == 'Kartu' ? 1 : 0;
+  int get methodPembayaranId => dropdownValue == 'Kartu' ? 1 : 2;
   int noToken = 0;
   int diskon = 0;
 
   void clickBayar() {
+    print('METHOD: ' + methodPembayaranId.toString());
     CartPayDialogResponse res = new CartPayDialogResponse(
         noToken: noToken.toString(),
         diskon: diskon.toString(),
@@ -1062,30 +1063,6 @@ class _CartPayDialogState extends State<CartPayDialog> {
             height: 10,
           ),
           Text(
-            'No Token :',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          Container(
-            height: 50,
-            color: Colors.grey.shade300,
-            child: Center(
-              child: TextField(
-                onChanged: (text) {
-                  setState(() {
-                    noToken = text.isEmpty ? 0 : int.parse(text);
-                  });
-                },
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                    border: InputBorder.none, focusedBorder: InputBorder.none),
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 10,
-          ),
-          Text(
             'Jenis pembayaran :',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
@@ -1105,14 +1082,38 @@ class _CartPayDialogState extends State<CartPayDialog> {
                   });
                 },
                 items: <String>[
-                  'Kartu',
                   'Tunai',
+                  'Kartu',
                 ].map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Text(value),
                   );
                 }).toList(),
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 10,
+          ),
+          Text(
+            'No Token :',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          Container(
+            height: 50,
+            color: Colors.grey.shade300,
+            child: Center(
+              child: TextField(
+                onChanged: (text) {
+                  setState(() {
+                    noToken = text.isEmpty ? 0 : int.parse(text);
+                  });
+                },
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(
+                    border: InputBorder.none, focusedBorder: InputBorder.none),
               ),
             ),
           ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:authentication_repository/helpers/api.dart';
 import 'package:authentication_repository/src/model/user_model.dart';
@@ -40,7 +41,7 @@ class AuthenticationRepository {
   final _controller = StreamController<AuthenticationResponse>();
 
   Stream<AuthenticationResponse> get onAuthenticationChanged async* {
-    await Future.delayed(Duration(seconds: 2));
+    await Future.delayed(Duration(seconds: 4));
     initUser();
     yield* _controller.stream;
   }
@@ -49,10 +50,14 @@ class AuthenticationRepository {
     SharedPreferences pref = await SharedPreferences.getInstance();
     String userData = pref.getString('user_model') ?? null;
     if (userData != null) {
-      final json = jsonDecode(userData);
-      final user = UserModel.fromJson(json);
-      _controller.add(AuthenticationResponse.authenticated(userdata: user));
-      return;
+      try {
+        final json = jsonDecode(userData);
+        final user = UserModel.fromJson(json);
+        _controller.add(AuthenticationResponse.authenticated(userdata: user));
+        return;
+      } catch (e) {
+        _controller.add(AuthenticationResponse.unauthenticated());
+      }
     }
     _controller.add(AuthenticationResponse.unauthenticated());
   }
@@ -68,16 +73,17 @@ class AuthenticationRepository {
     @required String password,
   }) async {
     try {
+      log('test');
       final result = await http.post(Uri.parse(Api.url + 'login.php'),
           body: {'email': email, 'password': password});
       final int responseCode = int.parse(result.body);
       // res == 0 => success
-      print(responseCode);
+      log(responseCode.toString());
       if (responseCode == 0) {
         final getuserinfo = await http.post(
             Uri.parse(Api.url + 'get-user-info-by-email.php'),
             body: {'email': email});
-        print(getuserinfo.body);
+        log(getuserinfo.body);
         SharedPreferences pref = await SharedPreferences.getInstance();
         pref.setString('user_model', getuserinfo.body);
         final json = jsonDecode(getuserinfo.body);

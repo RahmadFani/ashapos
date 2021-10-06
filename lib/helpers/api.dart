@@ -1,3 +1,3 @@
 class Api {
-  static String url = 'https://bontang.ashapos.com/api/';
+  static String url = 'https://bersinar.bontangkota.com/api/';
 }
