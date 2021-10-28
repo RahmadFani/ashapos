@@ -15,6 +15,7 @@ class UserModel {
   String areaId;
   String address;
   String collectVat;
+  String logo;
   String vatRegNo;
   String invoicePrint;
   String printSelect;
@@ -32,12 +33,14 @@ class UserModel {
   String alamatObjekUsaha;
   String kategoriUsahaId;
   String vat;
+  String footer;
 
   UserModel(
       {this.id,
       this.fullName,
       this.phone,
       this.emailAddress,
+      this.logo,
       this.password,
       this.role,
       this.outletId,
@@ -53,6 +56,7 @@ class UserModel {
       this.vatRegNo,
       this.invoicePrint,
       this.printSelect,
+      this.footer,
       this.kotPrint,
       this.startingDate,
       this.nextExpiry,
@@ -75,8 +79,10 @@ class UserModel {
     emailAddress = json['email_address'];
     password = json['password'];
     role = json['role'];
+    footer = json['footer'];
     outletId = json['outlet_id'];
     companyId = json['company_id'];
+    logo = json['logo'];
     accountCreationDate = json['account_creation_date'];
     lastLogin = json['last_login'];
     activeStatus = json['active_status'];

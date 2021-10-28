@@ -197,7 +197,7 @@ class _CartPageState extends State<CartPage> {
                                     fontSize: 24, fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                'Rp.${state.totalHargaWithDisc + ((int.parse(user.vat) / 100) * state.totalHarga).round()}',
+                                'Rp.${state.totalHargaWithDisc + ((int.parse(user.vat) / 100) * state.totalHargaWithDisc).round()}',
                                 style: TextStyle(
                                     fontSize: 24, fontWeight: FontWeight.bold),
                               ),
@@ -243,7 +243,7 @@ class _CartPageState extends State<CartPage> {
                                             .user;
                                         int userVat =
                                             ((int.parse(user.vat) / 100) *
-                                                    state.totalHarga)
+                                                    state.totalHargaWithDisc)
                                                 .round();
                                         final result =
                                             await showModalBottomSheet(
@@ -511,7 +511,8 @@ class _ProsesPembayaranDialogState extends State<ProsesPembayaranDialog> {
     int extraDiscount = int.parse(cartForm.diskon);
 
     final DateTime time = DateTime.now();
-    int userVat = ((int.parse(user.vat) / 100) * cart.totalHarga).round();
+    int userVat =
+        ((int.parse(user.vat) / 100) * cart.totalHargaWithDisc).round();
 
     final connectivity = BlocProvider.of<ConnectivityCubit>(context).state;
 
@@ -519,7 +520,10 @@ class _ProsesPembayaranDialogState extends State<ProsesPembayaranDialog> {
       'customer-id': customer != null ? customer.id : '1',
       'total-items': cart.carts.length.toString(),
       'subtotal': cart.totalHarga.toString(),
-      'due-amount': "",
+      'paid-amount': cartForm.paidAmount,
+      'due-amount': (int.parse(cartForm.paidAmount) -
+              (cart.totalHarga - cart.totalDisc - extraDiscount + userVat))
+          .toString(),
       'due-payment-date': "",
       'disc': extraDiscount.toString(),
       'disc-actual': (cart.totalDisc + extraDiscount).toString(),
@@ -547,7 +551,10 @@ class _ProsesPembayaranDialogState extends State<ProsesPembayaranDialog> {
         'customer-id': customer != null ? customer.id : '1',
         'total-items': cart.carts.length.toString(),
         'subtotal': cart.totalHarga.toString(),
-        'due-amount': "",
+        'paid-amount': cartForm.paidAmount,
+        'due-amount': (int.parse(cartForm.paidAmount) -
+                (cart.totalHarga - cart.totalDisc - extraDiscount + userVat))
+            .toString(),
         'due-payment-date': "",
         'disc': extraDiscount.toString(),
         'disc-actual': (cart.totalDisc + extraDiscount).toString(),
@@ -624,7 +631,7 @@ class _ProsesPembayaranDialogState extends State<ProsesPembayaranDialog> {
             saleNo: data.saleId,
             totalItems: data.totalItems,
             subTotal: data.subtotal,
-            paidAmount: "",
+            paidAmount: data.paidAmount,
             dueAmount: data.dueAmount,
             totalPayable: data.totalPayable,
             paymentMethodId: data.paymentMethod,
@@ -946,10 +953,15 @@ class CartPayDialogResponse {
   String date;
   String noToken;
   String diskon;
+  String paidAmount;
   String methodPembayaranId;
 
   CartPayDialogResponse(
-      {this.date, this.noToken, this.diskon, this.methodPembayaranId});
+      {this.date,
+      this.noToken,
+      this.diskon,
+      this.methodPembayaranId,
+      this.paidAmount});
 }
 
 class CartPayDialog extends StatefulWidget {
@@ -979,14 +991,37 @@ class _CartPayDialogState extends State<CartPayDialog> {
 
   int get methodPembayaranId => dropdownValue == 'Kartu' ? 1 : 2;
   int noToken = 0;
+  int paidAmount = 0;
   int diskon = 0;
 
-  void clickBayar() {
+  void clickBayar(int bayar) async {
+    if (methodPembayaranId == 1) {
+      paidAmount = bayar;
+    } else {
+      if ((paidAmount - diskon) < bayar) {
+        await showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+                  content: Text(
+                      'Jumlah bayar kurang dari total yang perlu dibayar.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text("Oke"),
+                    ),
+                  ],
+                ));
+        return;
+      }
+    }
     print('METHOD: ' + methodPembayaranId.toString());
     CartPayDialogResponse res = new CartPayDialogResponse(
         noToken: noToken.toString(),
         diskon: diskon.toString(),
         date: datepick,
+        paidAmount: paidAmount.toString(),
         methodPembayaranId: methodPembayaranId.toString());
     Navigator.pop(context, res);
   }
@@ -1056,7 +1091,7 @@ class _CartPayDialogState extends State<CartPayDialog> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           Text(
-            'Rp.${widget.cart.totalHargaWithDisc + ((int.parse(user.vat) / 100) * widget.cart.totalHarga).round()}',
+            'Rp.${(widget.cart.totalHargaWithDisc + ((int.parse(user.vat) / 100) * widget.cart.totalHargaWithDisc) - diskon).round()}',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
           ),
           SizedBox(
@@ -1097,6 +1132,30 @@ class _CartPayDialogState extends State<CartPayDialog> {
             height: 10,
           ),
           Text(
+            'Jumlah Bayar :',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          Container(
+            height: 50,
+            color: Colors.grey.shade300,
+            child: Center(
+              child: TextField(
+                onChanged: (text) {
+                  setState(() {
+                    paidAmount = text.isEmpty ? 0 : int.parse(text);
+                  });
+                },
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(
+                    border: InputBorder.none, focusedBorder: InputBorder.none),
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 10,
+          ),
+          Text(
             'No Token :',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
@@ -1125,7 +1184,9 @@ class _CartPayDialogState extends State<CartPayDialog> {
             width: double.infinity,
             child: ElevatedButton(
               child: Text('Bayar'),
-              onPressed: clickBayar,
+              onPressed: () => clickBayar((widget.cart.totalHargaWithDisc +
+                  ((int.parse(user.vat) / 100) * widget.cart.totalHargaWithDisc)
+                      .round())),
             ),
           ),
           SizedBox(

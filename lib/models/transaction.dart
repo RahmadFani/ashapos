@@ -11,6 +11,7 @@ class TransactionModel {
   String totalPayable;
   String paymentMethod;
   String tableId;
+  String paidAmount;
   String tokenNumber;
   String saleDate;
   String dateTime;
@@ -26,6 +27,7 @@ class TransactionModel {
       this.customerId,
       this.totalItems,
       this.subtotal,
+      this.paidAmount,
       this.dueAmount,
       this.duePaymentDate,
       this.disc,
@@ -49,6 +51,7 @@ class TransactionModel {
     customerId = json['customer-id'];
     totalItems = json['total-items'];
     subtotal = json['subtotal'];
+    paidAmount = json['paid-amount'];
     dueAmount = json['due-amount'];
     duePaymentDate = json['due-payment-date'];
     disc = json['disc'];

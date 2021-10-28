@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter_launcher_icons/utils.dart';
+import 'package:image/image.dart' as img;
+
 import 'package:ashapos/blocs/authentication/authentication_cubit.dart';
 import 'package:ashapos/blocs/connectivity/connectivity_cubit.dart';
 import 'package:ashapos/blocs/sales/sales_cubit.dart';
@@ -166,6 +169,7 @@ class _SalesCardState extends State<SalesCard> {
 
   @override
   Widget build(BuildContext context) {
+    UserModel user = BlocProvider.of<AuthenticationCubit>(context).state.user;
     return InkWell(
       onTap: () {
         setState(() {
@@ -181,7 +185,7 @@ class _SalesCardState extends State<SalesCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Nomor nota: ' + widget.item.saleNo),
+                Text('Nota.${user.outletId}.${widget.item.saleNo}'),
                 isopen
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,7 +196,7 @@ class _SalesCardState extends State<SalesCard> {
                         ],
                       )
                     : SizedBox.shrink(),
-                Text('Rp. ${widget.item.subTotal}'),
+                Text('Rp. ${widget.item.totalPayable}'),
                 isopen
                     ? Padding(
                         padding: const EdgeInsets.only(top: 8.0),
@@ -226,49 +230,66 @@ class _SalesCardState extends State<SalesCard> {
                               width: 10,
                             ),
                             ElevatedButton(
-                                onPressed: isLoading
-                                    ? null
-                                    : () async {
-                                        setState(() {
-                                          isLoading = true;
-                                        });
-                                        try {
-                                          final result = await http.post(
-                                              Uri.parse(
-                                                  Api.url + 'delete-sales.php'),
-                                              body: {'id': widget.item.id});
+                                onPressed: () async {
+                                  final delete = await showDialog(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                            content: Text(
+                                                'Apakah anda yakin ingin hapus data ini ?'),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(context),
+                                                  child: Text('Tidak')),
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                          context, true),
+                                                  child: Text('Iya')),
+                                            ],
+                                          ));
 
-                                          if (result.statusCode == 200) {
-                                            BlocProvider.of<SalesCubit>(context)
-                                                .refreshSales();
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(SnackBar(
-                                                    content: Text(
-                                                        'Item Berhasil di hapus')));
-                                          } else {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(SnackBar(
+                                  if (delete == null) return;
+                                  if (delete) {
+                                    setState(() {
+                                      isLoading = true;
+                                    });
+                                    try {
+                                      final result = await http.post(
+                                          Uri.parse(
+                                              Api.url + 'delete-sales.php'),
+                                          body: {'id': widget.item.id});
+
+                                      if (result.statusCode == 200) {
+                                        BlocProvider.of<SalesCubit>(context)
+                                            .refreshSales();
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(SnackBar(
+                                                content: Text(
+                                                    'Item Berhasil di hapus')));
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(SnackBar(
+                                          content: Text('Item gagal di hapus'),
+                                          behavior: SnackBarBehavior.floating,
+                                        ));
+                                        setState(() {
+                                          isLoading = false;
+                                        });
+                                      }
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(SnackBar(
                                               content:
-                                                  Text('Item gagal di hapus'),
+                                                  Text('Terjadi kesalahan.'),
                                               behavior:
-                                                  SnackBarBehavior.floating,
-                                            ));
-                                            setState(() {
-                                              isLoading = false;
-                                            });
-                                          }
-                                        } catch (e) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(SnackBar(
-                                                  content: Text(
-                                                      'Terjadi kesalahan.'),
-                                                  behavior: SnackBarBehavior
-                                                      .floating));
-                                          setState(() {
-                                            isLoading = false;
-                                          });
-                                        } finally {}
-                                      },
+                                                  SnackBarBehavior.floating));
+                                      setState(() {
+                                        isLoading = false;
+                                      });
+                                    } finally {}
+                                  }
+                                },
                                 child: Text('Hapus'))
                           ],
                         ),
@@ -291,8 +312,10 @@ class DetailSales extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    UserModel user = BlocProvider.of<AuthenticationCubit>(context).state.user;
     NumberFormat f =
         NumberFormat.currency(symbol: 'Rp ', locale: 'id', decimalDigits: 0);
+
     return AlertDialog(
       scrollable: true,
       title: Text('ETAM BERSINAR'),
@@ -300,7 +323,7 @@ class DetailSales extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Tanggal: ${item.dateTime}'),
-          Text('No. Nota ${item.saleNo}'),
+          Text('Nota.${user.outletId}.${item.saleNo}'),
           Divider(
             thickness: 2,
           ),
@@ -311,7 +334,7 @@ class DetailSales extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                            '(x${details[index].qty}) ${details[index].menuName}',
+                            '${details[index].menuName} x${details[index].qty}',
                             overflow: TextOverflow.ellipsis),
                       ),
                       Text('${f.format(double.parse(details[index].total))}')
@@ -348,6 +371,22 @@ class DetailSales extends StatelessWidget {
               Text('${f.format(double.parse(item.totalPayable))}')
             ],
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Terima'),
+              Text('${f.format(double.parse(item.paidAmount ?? '0'))}')
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Kembali'),
+              Text('${f.format(double.parse(item.dueAmount ?? '0'))}')
+            ],
+          ),
+          // Image.file(File(
+          //     '/data/user/0/com.barqun.bersinar/app_flutter/images/logo_outlet_etam_bersinar_bontang.png')),
           SizedBox(
             height: 15,
           ),
@@ -375,6 +414,9 @@ class DetailSales extends StatelessWidget {
                 final result = await BluetoothThermalPrinter.writeBytes(bytes);
                 print("Print $result");
               } else {
+                final prefs = await SharedPreferences.getInstance();
+                print('Logo Outlet');
+                print(prefs.get('logo_outlet') ?? 'tidak ada path outlet');
                 showDialog(
                     context: context,
                     builder: (_) => AlertDialog(
@@ -403,6 +445,28 @@ class DetailSales extends StatelessWidget {
       List<int> bytes = [];
       UserModel user = BlocProvider.of<AuthenticationCubit>(context).state.user;
 
+      final prefs = await SharedPreferences.getInstance();
+      final String logoPath = prefs.get('logo_outlet') ?? null;
+
+      // Centered
+      bytes += generator.rawBytes([
+        0x1B,
+        0x61,
+        0x31,
+      ]);
+
+      // left
+      //   bytes += generator.rawBytes([
+      //   0x1B,
+      //   0x61,
+      //   0x30,
+      // ]);
+
+      if (logoPath != null) {
+        img.Image image = decodeImageFile(logoPath);
+        bytes += generator.imageRaster(image);
+      }
+
       // final result = await http.post(
       //     Uri.parse(Api.url + 'get-sales-details.php'),
       //     body: {'id': item.id});
@@ -410,31 +474,65 @@ class DetailSales extends StatelessWidget {
       // List json = jsonDecode(result.body);
       // List<DetailSalesModel> details =
       //     json.map((e) => DetailSalesModel.fromJson(e)).toList();
-      bytes += generator.text('${user.namaWp}',
-          styles: PosStyles(align: PosAlign.center, width: PosTextSize.size3));
-      bytes += generator.text('ETAM BERSINAR',
-          styles: PosStyles(align: PosAlign.center, width: PosTextSize.size2));
-      bytes += generator.text('By Bapenda Kota Bontang',
-          styles: PosStyles(align: PosAlign.center));
+
       bytes += generator.feed(1);
-      bytes += generator.text(
-        'Tanggal ${item.dateTime}',
-      );
+      bytes += generator.text('${user.outletName}',
+          styles: PosStyles(
+              align: PosAlign.center, width: PosTextSize.size2, bold: true));
+
+      // bytes += generator.text('ETAM BERSINAR',
+      //     styles: PosStyles(align: PosAlign.center, width: PosTextSize.size2));
+      // bytes += generator.text('By Bapenda Kota Bontang',
+      //     styles: PosStyles(align: PosAlign.center));
+      bytes += generator.feed(1);
+
+      if (user.address != null) {
+        bytes += generator.text('${user.address}',
+            styles: PosStyles(
+              align: PosAlign.center,
+            ));
+      }
+      bytes += generator.text('${user.phone}',
+          styles: PosStyles(
+            align: PosAlign.center,
+          ));
+      bytes += generator.text('${user.emailAddress}',
+          styles: PosStyles(
+            align: PosAlign.center,
+          ));
+      bytes += generator.feed(1);
+      bytes += generator.rawBytes([
+        0x1B,
+        0x61,
+        0x30,
+      ]);
       bytes += generator.text(
         'Nota.${user.outletId}.${item.saleNo}',
+      );
+      bytes += generator.text(
+        'Tanggal ${item.dateTime}',
       );
       bytes += generator.hr();
       await Future.forEach(details, (DetailSalesModel data) {
         bytes += generator.row([
           PosColumn(
-            text: '${data.menuName} x${data.qty}',
+            text: '${data.menuName}',
+            width: 7,
+            styles: PosStyles(
+              align: PosAlign.left,
+            ),
+          ),
+        ]);
+        bytes += generator.row([
+          PosColumn(
+            text: '${data.qty} x ${data.price}',
             width: 7,
             styles: PosStyles(
               align: PosAlign.left,
             ),
           ),
           PosColumn(
-            text: '${f.format(double.parse(data.total))}',
+            text: 'Rp${f.format(double.parse(data.total))}',
             width: 5,
             styles: PosStyles(
               align: PosAlign.right,
@@ -452,13 +550,14 @@ class DetailSales extends StatelessWidget {
           ),
         ),
         PosColumn(
-          text: '${f.format(double.parse(item.subTotal))}',
+          text: 'Rp${f.format(double.parse(item.subTotal))}',
           width: 6,
           styles: PosStyles(
             align: PosAlign.right,
           ),
         ),
       ]);
+      bytes += generator.hr();
       bytes += generator.row([
         PosColumn(
           text: 'Diskon:',
@@ -477,7 +576,7 @@ class DetailSales extends StatelessWidget {
       ]);
       bytes += generator.row([
         PosColumn(
-          text: 'pajak:',
+          text: 'Pajak:',
           width: 6,
           styles: PosStyles(
             align: PosAlign.left,
@@ -491,11 +590,13 @@ class DetailSales extends StatelessWidget {
           ),
         ),
       ]);
+      bytes += generator.hr();
       bytes += generator.row([
         PosColumn(
           text: 'Total:',
           width: 7,
           styles: PosStyles(
+            bold: true,
             align: PosAlign.left,
           ),
         ),
@@ -503,12 +604,58 @@ class DetailSales extends StatelessWidget {
           text: '${f.format(double.parse(item.totalPayable))}',
           width: 5,
           styles: PosStyles(
+            bold: true,
             align: PosAlign.right,
           ),
         ),
       ]);
-
+      bytes += generator.hr();
+      bytes += generator.row([
+        PosColumn(
+          text: 'Terima:',
+          width: 7,
+          styles: PosStyles(
+            align: PosAlign.left,
+          ),
+        ),
+        PosColumn(
+          text: '${f.format(double.parse(item.paidAmount ?? '0'))}',
+          width: 5,
+          styles: PosStyles(
+            align: PosAlign.right,
+          ),
+        ),
+      ]);
+      bytes += generator.row([
+        PosColumn(
+          text: 'Kembali:',
+          width: 7,
+          styles: PosStyles(
+            align: PosAlign.left,
+          ),
+        ),
+        PosColumn(
+          text: '${f.format(double.parse(item.dueAmount ?? '0'))}',
+          width: 5,
+          styles: PosStyles(
+            align: PosAlign.right,
+          ),
+        ),
+      ]);
       bytes += generator.feed(1);
+      bytes += generator.rawBytes([
+        0x1B,
+        0x61,
+        0x31,
+      ]);
+
+      if (user.footer != null) {
+        bytes += generator.text('${user.footer}',
+            styles: PosStyles(
+              align: PosAlign.center,
+            ));
+      }
+
       bytes += generator.cut();
 
       return bytes;
