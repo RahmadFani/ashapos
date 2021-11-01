@@ -133,7 +133,9 @@ class AuthenticationRepository {
       var url = user.logo; // <-- 1
       var response = await http.get(Uri.parse(url)); // <--2
       log(response.statusCode.toString());
-      if (response.statusCode != 200) return;
+      if (response.statusCode != 200) {
+        return throw Error();
+      }
       imageCache.clear();
       var documentDirectory = await getApplicationDocumentsDirectory();
 
@@ -154,13 +156,14 @@ class AuthenticationRepository {
 
       prefs.setString('logo_outlet', file2.path);
     } on FileSystemException catch (error) {
-      log('ERROR IMAGE SAVE');
+      log('ERROR IMAGE SAVE SISTEM');
       log(error.message);
       log(error.path);
       prefs.remove('logo_outlet');
     } catch (e) {
       log('ERROR IMAGE SAVE');
       log(e.toString());
+      prefs.remove('logo_outlet');
     }
   }
 }
