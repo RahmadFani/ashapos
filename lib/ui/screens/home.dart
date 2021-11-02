@@ -450,11 +450,11 @@ class DetailSales extends StatelessWidget {
       final String logoPath = prefs.get('logo_outlet') ?? null;
 
       // Centered
-      bytes += generator.rawBytes([
-        0x1B,
-        0x61,
-        0x31,
-      ]);
+      // bytes += generator.rawBytes([
+      //   0x1B,
+      //   0x61,
+      //   0x31,
+      // ]);
 
       // left
       //   bytes += generator.rawBytes([
@@ -477,36 +477,61 @@ class DetailSales extends StatelessWidget {
       //     json.map((e) => DetailSalesModel.fromJson(e)).toList();
 
       bytes += generator.feed(1);
+      bytes += generator.rawBytes([
+        0x1B,
+        0x61,
+        0x31,
+      ]);
       bytes += generator.text('${user.outletName}',
           styles: PosStyles(
               align: PosAlign.center, width: PosTextSize.size2, bold: true));
 
       // bytes += generator.text('ETAM BERSINAR',
       //     styles: PosStyles(align: PosAlign.center, width: PosTextSize.size2));
-      // bytes += generator.text('By Bapenda Kota Bontang',
-      //     styles: PosStyles(align: PosAlign.center));
+      bytes += generator.rawBytes([
+        0x1B,
+        0x61,
+        0x31,
+      ]);
+      bytes += generator.text('By Etam Bersinar',
+          styles: PosStyles(align: PosAlign.center));
       bytes += generator.feed(1);
 
       if (user.address != null) {
+        bytes += generator.rawBytes([
+          0x1B,
+          0x61,
+          0x31,
+        ]);
         bytes += generator.text('${user.address}',
             styles: PosStyles(
               align: PosAlign.center,
             ));
       }
+      bytes += generator.rawBytes([
+        0x1B,
+        0x61,
+        0x31,
+      ]);
       bytes += generator.text('${user.phone}',
           styles: PosStyles(
             align: PosAlign.center,
           ));
+      bytes += generator.rawBytes([
+        0x1B,
+        0x61,
+        0x31,
+      ]);
       bytes += generator.text('${user.emailAddress}',
           styles: PosStyles(
             align: PosAlign.center,
           ));
       bytes += generator.feed(1);
-      bytes += generator.rawBytes([
-        0x1B,
-        0x61,
-        0x30,
-      ]);
+      // bytes += generator.rawBytes([
+      //   0x1B,
+      //   0x61,
+      //   0x30,
+      // ]);
       bytes += generator.text(
         'Nota.${user.outletId}.${item.saleNo}',
       );
@@ -518,7 +543,7 @@ class DetailSales extends StatelessWidget {
         bytes += generator.row([
           PosColumn(
             text: '${data.menuName}',
-            width: 7,
+            width: 12,
             styles: PosStyles(
               align: PosAlign.left,
             ),
@@ -526,14 +551,14 @@ class DetailSales extends StatelessWidget {
         ]);
         bytes += generator.row([
           PosColumn(
-            text: '${data.qty} x ${data.price}',
+            text: '${data.qty} x ${f.format(double.parse(data.price))}',
             width: 7,
             styles: PosStyles(
               align: PosAlign.left,
             ),
           ),
           PosColumn(
-            text: 'Rp${f.format(double.parse(data.total))}',
+            text: '${f.format(double.parse(data.total))}',
             width: 5,
             styles: PosStyles(
               align: PosAlign.right,
@@ -551,7 +576,7 @@ class DetailSales extends StatelessWidget {
           ),
         ),
         PosColumn(
-          text: 'Rp${f.format(double.parse(item.subTotal))}',
+          text: '${f.format(double.parse(item.subTotal))}',
           width: 6,
           styles: PosStyles(
             align: PosAlign.right,
